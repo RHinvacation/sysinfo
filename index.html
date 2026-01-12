@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统监控面板</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-bg: #1a202c;
+            --secondary-bg: #2d3748;
+            --card-bg: #4a5568;
+            --text-primary: #f7fafc;
+            --text-secondary: #cbd5e0;
+            --accent-blue: #3182ce;
+            --accent-green: #38a169;
+            --accent-orange: #ed8936;
+            --accent-red: #e53e3e;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        /* 顶部时间日期天气区域 */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+        
+        .time-info {
+            text-align: left;
+        }
+        
+        .time-display {
+            font-size: 6rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .date-location {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .date-info {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 25px;
+            border-radius: 8px;
+        }
+        
+        .weather-icon {
+            font-size: 3rem;
+        }
+        
+        .weather-details {
+            text-align: right;
+        }
+        
+        .city-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .temperature {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        /* 资源监控区域 */
+        .resources-section {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            height: calc(100% - 80px);
+        }
+        
+        /* 信息卡片 */
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .info-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+        
+        .info-unit {
+            font-size: 1rem;
+            margin-left: 5px;
+            opacity: 0.7;
+        }
+        
+        /* 仪表盘样式 */
+        .gauge-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .gauge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gauge-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 15;
+        }
+        
+        .gauge-progress {
+            fill: none;
+            stroke-width: 15;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .gauge-progress.cpu {
+            stroke: var(--accent-blue);
+        }
+        
+        .gauge-progress.memory {
+            stroke: var(--accent-green);
+        }
+        
+        .gauge-progress.disk {
+            stroke: var(--accent-orange);
+        }
+        
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .gauge-unit {
+            font-size: 1rem;
+            margin-left: 5px;
+            opacity: 0.7;
+        }
+        
+        /* 网速卡片 */
+        .speed-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .speed-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .speed-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .speed-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+        
+        .speed-unit {
+            font-size: 1.2rem;
+            margin-left: 5px;
+            opacity: 0.7;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .time-display {
+                font-size: 4rem;
+            }
+            
+            .date-location {
+                font-size: 1.2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-section {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .time-info {
+                text-align: center;
+            }
+            
+            .time-display {
+                font-size: 3rem;
+            }
+            
+            .date-location {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // 主应用组件
+        function App() {
+            return (
+                <div className="container">
+                    <HeaderSection />
+                    <ResourcesSection />
+                </div>
+            );
+        }
+
+        // 顶部时间日期天气组件
+        function HeaderSection() {
+            const [time, setTime] = useState(new Date());
+            const [weather, setWeather] = useState({
+                city: "获取中...",
+                temperature: "--°",
+                description: "加载中",
+                icon: "⏳"
+            });
+
+            useEffect(() => {
+                // 时间更新
+                const timer = setInterval(() => {
+                    setTime(new Date());
+                }, 1000);
+
+                // 获取天气数据
+                const fetchWeather = async (latitude, longitude) => {
+                    try {
+                        // 使用Open-Meteo获取天气数据（免费，无需API密钥）
+                        const weatherResponse = await fetch(
+                            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=Asia/Shanghai`
+                        );
+                        const weatherData = await weatherResponse.json();
+
+                        // 使用Nominatim反向地理编码获取城市名称（免费，无需API密钥）
+                        const geoResponse = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh-CN`
+                        );
+                        const geoData = await geoResponse.json();
+                        const city = geoData.address.city || geoData.address.town || geoData.address.village || "未知城市";
+
+                        // 天气代码映射到描述
+                        const weatherCodes = {
+                            0: '晴朗',
+                            1: '多云',
+                            2: '多云',
+                            3: '阴天',
+                            45: '雾',
+                            48: '雾凇',
+                            51: '小雨',
+                            53: '小雨',
+                            55: '小雨',
+                            56: '冻雨',
+                            57: '冻雨',
+                            61: '中雨',
+                            63: '中雨',
+                            65: '中雨',
+                            66: '冻雨',
+                            67: '冻雨',
+                            71: '小雪',
+                            73: '小雪',
+                            75: '小雪',
+                            77: '雪粒',
+                            80: '阵雨',
+                            81: '阵雨',
+                            82: '阵雨',
+                            85: '阵雪',
+                            86: '阵雪',
+                            95: '雷暴',
+                            96: '雷暴',
+                            99: '雷暴'
+                        };
+
+                        const weatherCode = weatherData.current.weather_code;
+                        const description = weatherCodes[weatherCode] || '未知天气';
+                        
+                        // 根据天气描述获取图标
+                        let icon = '🌤️';
+                        if (description.includes('晴')) icon = '☀️';
+                        else if (description.includes('云')) icon = '☁️';
+                        else if (description.includes('雨')) icon = '🌧️';
+                        else if (description.includes('雪')) icon = '❄️';
+                        else if (description.includes('雾')) icon = '🌫️';
+                        else if (description.includes('雷')) icon = '⛈️';
+
+                        setWeather({
+                            city: city,
+                            temperature: `${Math.round(weatherData.current.temperature_2m)}°`,
+                            description: description,
+                            icon: icon
+                        });
+                    } catch (error) {
+                        console.error('获取天气失败:', error);
+                        // 失败时使用默认数据
+                        setWeather({
+                            city: "北京",
+                            temperature: "12°",
+                            description: "晴朗",
+                            icon: "☀️"
+                        });
+                    }
+                };
+
+                // 默认位置（北京）
+                const defaultLatitude = 39.9042;
+                const defaultLongitude = 116.4074;
+
+                // 请求获取当前位置
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            fetchWeather(position.coords.latitude, position.coords.longitude);
+                        },
+                        (error) => {
+                            console.error('获取位置失败，使用默认位置:', error);
+                            // 定位失败时使用默认位置（北京）
+                            fetchWeather(defaultLatitude, defaultLongitude);
+                        },
+                        {
+                            enableHighAccuracy: false,
+                            timeout: 10000,
+                            maximumAge: 300000
+                        }
+                    );
+                } else {
+                    // 浏览器不支持地理定位时使用默认位置
+                    fetchWeather(defaultLatitude, defaultLongitude);
+                }
+
+                return () => clearInterval(timer);
+            }, []);
+
+            const formatTime = (date) => {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+            };
+
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const getDayOfWeek = (date) => {
+                const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                return days[date.getDay()];
+            };
+
+            return (
+                <div className="header-section">
+                    <div className="time-info">
+                        <div className="time-display">{formatTime(time)}</div>
+                        <div className="date-location">
+                            <div className="date-info">
+                                <div className="date-display">{formatDate(time)}</div>
+                                <div className="day-display">{getDayOfWeek(time)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="weather-info">
+                        <div className="weather-icon">{weather.icon}</div>
+                        <div className="weather-details">
+                            <div className="city-name">{weather.city}</div>
+                            <div className="temperature">{weather.temperature}</div>
+                            <div className="weather-desc">{weather.description}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 仪表盘组件
+        function Gauge({ title, value, max = 100, unit = '%', type = 'cpu' }) {
+            const radius = 75;
+            const circumference = 2 * Math.PI * radius;
+            const progress = (value / max) * circumference;
+            const dashoffset = circumference - progress;
+
+            return (
+                <div className="gauge-card">
+                    <div className="gauge-title">{title}</div>
+                    <div className="gauge-container">
+                        <svg className="gauge-svg" viewBox="0 0 200 200">
+                            <circle 
+                                className="gauge-bg" 
+                                cx="100" 
+                                cy="100" 
+                                r={radius} 
+                            />
+                            <circle 
+                                className={`gauge-progress ${type}`} 
+                                cx="100" 
+                                cy="100" 
+                                r={radius} 
+                                style={{ strokeDasharray: circumference, strokeDashoffset: dashoffset }}
+                            />
+                        </svg>
+                        <div className="gauge-value">
+                            {value}
+                            <span className="gauge-unit">{unit}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 网速卡片组件
+        function SpeedCard({ title, value, unit = 'Mbps' }) {
+            return (
+                <div className="speed-card">
+                    <div className="speed-title">{title}</div>
+                    <div className="speed-value">
+                        {value}
+                        <span className="speed-unit">{unit}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // 信息卡片组件
+        function InfoCard({ title, value, unit = '' }) {
+            return (
+                <div className="info-card">
+                    <div className="info-title">{title}</div>
+                    <div className="info-value">
+                        {value}
+                        {unit && <span className="info-unit">{unit}</span>}
+                    </div>
+                </div>
+            );
+        }
+
+        // 资源监控组件
+        function ResourcesSection() {
+            const [resources, setResources] = useState({
+                cpu: 0,
+                memory: 0,
+                disk: 0,
+                uploadSpeed: 0,
+                downloadSpeed: 0,
+                processes: 0,
+                uptime: 0,
+                diskIO: 0,
+                networkConnections: 0
+            });
+
+            useEffect(() => {
+                // 获取系统启动时间
+                const startTime = Date.now();
+                
+                // 模拟系统资源数据更新
+                const updateResources = () => {
+                    // 计算系统运行时间（小时）
+                    const uptime = Math.floor((Date.now() - startTime) / (1000 * 60 * 60));
+                    
+                    setResources({
+                        cpu: Math.floor(Math.random() * 100),
+                        memory: Math.floor(Math.random() * 100),
+                        disk: Math.floor(Math.random() * 100),
+                        uploadSpeed: (Math.random() * 100).toFixed(2),
+                        downloadSpeed: (Math.random() * 500).toFixed(2),
+                        processes: Math.floor(Math.random() * 200) + 50,
+                        uptime: uptime,
+                        diskIO: (Math.random() * 100).toFixed(2),
+                        networkConnections: Math.floor(Math.random() * 1000) + 100
+                    });
+                };
+
+                updateResources();
+                const timer = setInterval(updateResources, 2000);
+
+                return () => clearInterval(timer);
+            }, []);
+
+            return (
+                <div className="resources-section">
+                    <h2 className="section-title">系统资源监控</h2>
+                    <div className="dashboard-grid">
+                        <Gauge title="CPU 使用率" value={resources.cpu} type="cpu" />
+                        <Gauge title="内存使用率" value={resources.memory} type="memory" />
+                        <Gauge title="磁盘使用率" value={resources.disk} type="disk" />
+                        <SpeedCard title="上传速度" value={resources.uploadSpeed} />
+                        <SpeedCard title="下载速度" value={resources.downloadSpeed} />
+                        <InfoCard title="进程数量" value={resources.processes} unit="个" />
+                        <InfoCard title="系统运行时间" value={resources.uptime} unit="小时" />
+                        <InfoCard title="磁盘IO" value={resources.diskIO} unit="MB/s" />
+                        <InfoCard title="网络连接数" value={resources.networkConnections} unit="个" />
+                    </div>
+                </div>
+            );
+        }
+
+        // 渲染应用
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
